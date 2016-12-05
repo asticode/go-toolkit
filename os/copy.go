@@ -5,14 +5,7 @@ import (
 
 	"context"
 
-	"errors"
-
 	"github.com/asticode/go-toolkit/io"
-)
-
-// Vars
-var (
-	ErrCancelled = errors.New("cancelled")
 )
 
 // Copy is a cross partitions cancellable copy
