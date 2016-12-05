@@ -25,7 +25,7 @@ func TestWithTimeout(t *testing.T) {
 	assert.EqualError(t, err, "signal: killed")
 
 	// Cancel
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	cmd = exec.NewCmd(ctx, "sleep", "0.5")
 	var wg = &sync.WaitGroup{}
 	wg.Add(1)
