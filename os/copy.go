@@ -9,7 +9,7 @@ import (
 )
 
 // Copy is a cross partitions cancellable copy
-func Copy(src, dst string, ctx context.Context) (err error) {
+func Copy(ctx context.Context, src, dst string) (err error) {
 	// Open the source file
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -25,6 +25,6 @@ func Copy(src, dst string, ctx context.Context) (err error) {
 	defer dstFile.Close()
 
 	// Copy the content
-	_, err = io.Copy(srcFile, dstFile, ctx)
+	_, err = io.Copy(ctx, srcFile, dstFile)
 	return
 }

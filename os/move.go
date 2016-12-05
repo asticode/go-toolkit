@@ -6,9 +6,9 @@ import (
 )
 
 // Move is a cross partitions cancellable move even if files are on different partitions
-func Move(src, dst string, ctx context.Context) (err error) {
+func Move(ctx context.Context, src, dst string) (err error) {
 	// Copy
-	if err = Copy(src, dst, ctx); err != nil {
+	if err = Copy(ctx, src, dst); err != nil {
 		return
 	}
 

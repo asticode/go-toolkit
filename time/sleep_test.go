@@ -18,7 +18,7 @@ func TestSleep(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err = time.Sleep(stltime.Minute, ctx)
+		err = time.Sleep(ctx, stltime.Minute)
 	}()
 	cancel()
 	wg.Wait()

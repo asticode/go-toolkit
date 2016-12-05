@@ -12,7 +12,7 @@ var (
 )
 
 // Sleep is a cancellable sleep
-func Sleep(d time.Duration, ctx context.Context) (err error) {
+func Sleep(ctx context.Context, d time.Duration) (err error) {
 	for {
 		select {
 		case <-time.After(d):
