@@ -8,7 +8,7 @@ import (
 
 // Const
 const (
-	BufferSize = 32 * 1024
+	bufferSize = 32 * 1024
 )
 
 // Vars
@@ -20,7 +20,7 @@ var (
 // bufferPool is a pool of reusable buffers
 var bufferPool = &sync.Pool{
 	New: func() interface{} {
-		return make([]byte, BufferSize)
+		return make([]byte, bufferSize)
 	},
 }
 
