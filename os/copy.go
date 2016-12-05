@@ -3,11 +3,13 @@ package os
 import (
 	"os"
 
+	"context"
+
 	"github.com/asticode/go-toolkit/io"
 )
 
 // Copy is a cross partitions cancellable copy
-func Copy(src, dst string, channelCancel chan bool) (err error) {
+func Copy(src, dst string, ctx context.Context) (err error) {
 	// Open the source file
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -23,6 +25,6 @@ func Copy(src, dst string, channelCancel chan bool) (err error) {
 	defer dstFile.Close()
 
 	// Copy the content
-	_, err = io.Copy(srcFile, dstFile, channelCancel)
+	_, err = io.Copy(srcFile, dstFile, ctx)
 	return
 }

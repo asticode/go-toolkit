@@ -1,6 +1,7 @@
 package time
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -11,12 +12,12 @@ var (
 )
 
 // Sleep is a cancellable sleep
-func Sleep(d time.Duration, channelCancel chan bool) (err error) {
+func Sleep(d time.Duration, ctx context.Context) (err error) {
 	for {
 		select {
 		case <-time.After(d):
 			return
-		case <-channelCancel:
+		case <-ctx.Done():
 			err = ErrCancelled
 			return
 		}

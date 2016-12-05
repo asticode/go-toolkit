@@ -1,6 +1,7 @@
 package io
 
 import (
+	"context"
 	"errors"
 	"io"
 	"sync"
@@ -35,7 +36,7 @@ func putBuffer(buf []byte) {
 }
 
 // Copy represents a cancellable copy
-func Copy(src io.Reader, dst io.Writer, channelCancel chan bool) (written int64, err error) {
+func Copy(src io.Reader, dst io.Writer, ctx context.Context) (written int64, err error) {
 	// Init
 	var buf = newBuffer()
 	defer putBuffer(buf)
@@ -46,7 +47,7 @@ func Copy(src io.Reader, dst io.Writer, channelCancel chan bool) (written int64,
 	go func() {
 		for {
 			select {
-			case <-channelCancel:
+			case <-ctx.Done():
 				cancelled = true
 			case <-channelQuit:
 				return

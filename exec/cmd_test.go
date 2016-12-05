@@ -1,40 +1,39 @@
 package exec_test
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/asticode/go-toolkit/exec"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestWithTimeout(t *testing.T) {
-	// Init
-	cmd := exec.NewCmd("sleep", "0.5")
-
 	// Success
-	cmd.Timeout = 1 * time.Second
+	var ctx, _ = context.WithTimeout(context.Background(), time.Second)
+	var cmd = exec.NewCmd(ctx, "sleep", "0.5")
 	assert.Equal(t, "sleep 0.5", cmd.String())
 	_, _, err := exec.Exec(cmd)
 	assert.NoError(t, err)
 
 	// Timeout
-	cmd.Timeout = time.Millisecond
+	ctx, _ = context.WithTimeout(context.Background(), time.Millisecond)
+	cmd = exec.NewCmd(ctx, "sleep", "0.5")
 	_, _, err = exec.Exec(cmd)
-	assert.Error(t, err)
-	assert.Equal(t, fmt.Sprintf("Timeout of %v reached", cmd.Timeout), err.Error()[:22])
+	assert.EqualError(t, err, "signal: killed")
 
 	// Cancel
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	cmd = exec.NewCmd(ctx, "sleep", "0.5")
 	var wg = &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		_, _, err = exec.Exec(cmd)
 	}()
-	cmd.ChannelCancel <- true
+	cancel()
 	wg.Wait()
-	assert.Error(t, err)
-	assert.Equal(t, "Command was cancelled, no process to kill", err.Error()[:41])
+	assert.EqualError(t, err, "context canceled")
 }

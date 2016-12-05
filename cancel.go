@@ -1,24 +1,27 @@
 package toolkit
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
-// Canceller represents an object capable of managing a cancellation
+// Canceller represents an object capable of managing a graceful cancellation
+// We're using 2 mutexes here :
+//  - using mutexCancel allows us to make sure to control when Cancel() can be called
+//  - using mutexContextPool allows us to make sure concurrent accesses to context pool are properly done
 type Canceller struct {
-	cancelled bool
-	channels  map[chan bool]bool
-	// We're using 2 mutexes here :
-	//  - using mutexCancel allows us to make sure to control when Cancel() can be called
-	//  - using mutexChannels allows us to make sure concurrent accesses to canceller channels are properly done
-	mutexCancel   *sync.RWMutex
-	mutexChannels *sync.RWMutex
+	cancelled        bool
+	contextPool      map[context.Context]context.CancelFunc
+	mutexCancel      *sync.RWMutex
+	mutexContextPool *sync.RWMutex
 }
 
 // NewCanceller creates a new Canceller
 func NewCanceller() *Canceller {
 	return &Canceller{
-		channels:      make(map[chan bool]bool),
-		mutexCancel:   &sync.RWMutex{},
-		mutexChannels: &sync.RWMutex{},
+		contextPool:      make(map[context.Context]context.CancelFunc),
+		mutexCancel:      &sync.RWMutex{},
+		mutexContextPool: &sync.RWMutex{},
 	}
 }
 
@@ -26,12 +29,11 @@ func NewCanceller() *Canceller {
 func (c *Canceller) Cancel() {
 	c.mutexCancel.Lock()
 	defer c.mutexCancel.Unlock()
-	c.mutexChannels.Lock()
-	defer c.mutexChannels.Unlock()
+	c.mutexContextPool.Lock()
+	defer c.mutexContextPool.Unlock()
 	c.cancelled = true
-	for ch := range c.channels {
-		delete(c.channels, ch)
-		close(ch)
+	for ctx, cancel := range c.contextPool {
+		c.closeUnsafe(ctx, cancel)
 	}
 }
 
@@ -43,10 +45,18 @@ func (c *Canceller) Cancelled() bool {
 }
 
 // Close closes a channel
-func (c *Canceller) Close(i chan bool) {
-	c.mutexChannels.Lock()
-	defer c.mutexChannels.Unlock()
-	delete(c.channels, i)
+func (c *Canceller) Close(ctx context.Context) {
+	c.mutexContextPool.Lock()
+	defer c.mutexContextPool.Unlock()
+	if cancelFunc, ok := c.contextPool[ctx]; ok {
+		c.closeUnsafe(ctx, cancelFunc)
+	}
+}
+
+// closeUnsafe closes the cancel func without locking the mutex
+func (c *Canceller) closeUnsafe(ctx context.Context, cancelFunc context.CancelFunc) {
+	cancelFunc()
+	delete(c.contextPool, ctx)
 }
 
 // Lock locks the canceller for cancellation
@@ -54,12 +64,13 @@ func (c *Canceller) Lock() {
 	c.mutexCancel.Lock()
 }
 
-// NewChannel returns a new cancellation channel
-func (c *Canceller) NewChannel() (o chan bool) {
-	c.mutexChannels.Lock()
-	defer c.mutexChannels.Unlock()
-	o = make(chan bool)
-	c.channels[o] = true
+// NewContext returns a new context
+func (c *Canceller) NewContext() (ctx context.Context) {
+	c.mutexContextPool.Lock()
+	defer c.mutexContextPool.Unlock()
+	var cancelFunc context.CancelFunc
+	ctx, cancelFunc = context.WithCancel(context.Background())
+	c.contextPool[ctx] = cancelFunc
 	return
 }
 

@@ -10,16 +10,16 @@ import (
 
 func TestCanceller_Cancel(t *testing.T) {
 	var c = toolkit.NewCanceller()
-	var ch1, ch2 = c.NewChannel(), c.NewChannel()
-	defer c.Close(ch1)
-	defer c.Close(ch2)
+	var ctx1, ctx2 = c.NewContext(), c.NewContext()
+	defer c.Close(ctx1)
+	defer c.Close(ctx2)
 	var wg = &sync.WaitGroup{}
 	wg.Add(2)
 	var count int
 	go func() {
 		for {
 			select {
-			case <-ch1:
+			case <-ctx1.Done():
 				count += 1
 				wg.Done()
 				return
@@ -29,7 +29,7 @@ func TestCanceller_Cancel(t *testing.T) {
 	go func() {
 		for {
 			select {
-			case <-ch2:
+			case <-ctx2.Done():
 				count += 2
 				wg.Done()
 				return

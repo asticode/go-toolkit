@@ -4,16 +4,23 @@ import (
 	"testing"
 	stltime "time"
 
+	"sync"
+
 	"github.com/asticode/go-toolkit/time"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestSleep(t *testing.T) {
-	var channelCancel = make(chan bool)
+	var ctx, cancel = context.WithCancel(context.Background())
 	var err error
+	var wg = &sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
-		err = time.Sleep(stltime.Minute, channelCancel)
+		defer wg.Done()
+		err = time.Sleep(stltime.Minute, ctx)
 	}()
-	channelCancel <- true
+	cancel()
+	wg.Wait()
 	assert.EqualError(t, err, time.ErrCancelled.Error())
 }

@@ -1,11 +1,14 @@
 package os
 
-import "os"
+import (
+	"context"
+	"os"
+)
 
 // Move is a cross partitions cancellable move even if files are on different partitions
-func Move(src, dst string, channelCancel chan bool) (err error) {
+func Move(src, dst string, ctx context.Context) (err error) {
 	// Copy
-	if err = Copy(src, dst, channelCancel); err != nil {
+	if err = Copy(src, dst, ctx); err != nil {
 		return
 	}
 

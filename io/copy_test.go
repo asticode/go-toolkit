@@ -7,6 +7,7 @@ import (
 
 	main "github.com/asticode/go-toolkit/io"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // MockedReader is a mocked io.Reader
@@ -33,24 +34,25 @@ func TestCopy(t *testing.T) {
 	// Init
 	var w = &bytes.Buffer{}
 	var r1, r2 = NewMockedReader("testiocopy", true), NewMockedReader("testiocopy", false)
-	var channelCancel = make(chan bool)
 
 	// Test cancel
 	var nw int64
 	var err error
+	var ctx, cancel = context.WithCancel(context.Background())
 	var wg = &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		nw, err = main.Copy(r1, w, channelCancel)
+		nw, err = main.Copy(r1, w, ctx)
 	}()
-	channelCancel <- true
+	cancel()
 	wg.Wait()
 	assert.EqualError(t, err, main.ErrCancelled.Error())
 
 	// Test success
 	w.Reset()
-	nw, err = main.Copy(r2, w, channelCancel)
+	ctx = context.Background()
+	nw, err = main.Copy(r2, w, ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "testiocopy", w.String())
 }
