@@ -1,18 +1,19 @@
-package toolkit_test
+package context_test
 
 import (
 	"sync"
 	"testing"
 
-	"github.com/asticode/go-toolkit"
+	"github.com/asticode/go-toolkit/context"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCanceller_Cancel(t *testing.T) {
-	var c = toolkit.NewCanceller()
-	var ctx1, ctx2 = c.NewContext(), c.NewContext()
-	defer c.Close(ctx1)
-	defer c.Close(ctx2)
+	var c = context.NewCanceller()
+	var ctx1, cancel1 = c.NewContext()
+	var ctx2, cancel2 = c.NewContext()
+	defer cancel1()
+	defer cancel2()
 	var wg = &sync.WaitGroup{}
 	wg.Add(2)
 	var count int
@@ -39,11 +40,7 @@ func TestCanceller_Cancel(t *testing.T) {
 	c.Cancel()
 	wg.Wait()
 	assert.Equal(t, 3, count)
-}
-
-func TestCanceller_Reset(t *testing.T) {
-	var c = toolkit.NewCanceller()
-	c.Cancel()
+	assert.True(t, c.Cancelled())
 	c.Reset()
 	assert.False(t, c.Cancelled())
 }
