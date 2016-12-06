@@ -22,5 +22,5 @@ func TestSleep(t *testing.T) {
 	}()
 	cancel()
 	wg.Wait()
-	assert.EqualError(t, err, time.ErrCancelled.Error())
+	assert.EqualError(t, err, "context canceled")
 }

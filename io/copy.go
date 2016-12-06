@@ -14,7 +14,6 @@ const (
 
 // Vars
 var (
-	ErrCancelled  = errors.New("cancelled")
 	ErrShortWrite = errors.New("Short write")
 )
 
@@ -37,29 +36,11 @@ func putBuffer(buf []byte) {
 
 // Copy represents a cancellable copy
 func Copy(ctx context.Context, src io.Reader, dst io.Writer) (written int64, err error) {
-	// Init
 	var buf = newBuffer()
 	defer putBuffer(buf)
-	var cancelled, channelQuit = false, make(chan bool)
-	defer close(channelQuit)
-
-	// Listen to channels
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				cancelled = true
-			case <-channelQuit:
-				return
-			}
-		}
-	}()
-
-	// Loop
 	for {
 		// Check cancellation
-		if cancelled {
-			err = ErrCancelled
+		if err = ctx.Err(); err != nil {
 			return
 		}
 

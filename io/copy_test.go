@@ -47,7 +47,7 @@ func TestCopy(t *testing.T) {
 	}()
 	cancel()
 	wg.Wait()
-	assert.EqualError(t, err, main.ErrCancelled.Error())
+	assert.EqualError(t, err, "context canceled")
 
 	// Test success
 	w.Reset()
