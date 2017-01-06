@@ -28,8 +28,8 @@ var (
 	regexpStack          = regexp.MustCompile("github\\.com\\/asticode\\/go-sync")
 )
 
-// RWMutex represents a RWMutex capable of logging its actions to ease deadlock debugging
-type RWMutex struct {
+// RWMutexLogged represents a RWMutex capable of logging its actions to ease deadlock debugging
+type RWMutexLogged struct {
 	Logger xlog.Logger
 	Name   string
 	*sync.RWMutex
@@ -44,9 +44,9 @@ type RWMutexInfo struct {
 	Parent string
 }
 
-// NewRWMutex creates a new RWMutex
-func NewRWMutex(l xlog.Logger, name string, t time.Duration) *RWMutex {
-	return &RWMutex{
+// NewRWMutexLogged creates a new RWMutexLogged
+func NewRWMutexLogged(l xlog.Logger, name string, t time.Duration) *RWMutexLogged {
+	return &RWMutexLogged{
 		Logger:  l,
 		Name:    name,
 		RWMutex: &sync.RWMutex{},
@@ -54,9 +54,9 @@ func NewRWMutex(l xlog.Logger, name string, t time.Duration) *RWMutex {
 	}
 }
 
-// NewRWMutexFromFlag creates a new RWMutex based on the flag config
-func NewRWMutexFromFlag(l xlog.Logger, name string) *RWMutex {
-	return NewRWMutex(l, name, *mutexDeadlockTimeout)
+// NewRWMutexLoggedFromFlag creates a new RWMutexLogged based on the flag config
+func NewRWMutexLoggedFromFlag(l xlog.Logger, name string) *RWMutexLogged {
+	return NewRWMutexLogged(l, name, *mutexDeadlockTimeout)
 }
 
 // Stack allows testing functions using it
@@ -75,7 +75,7 @@ var Debug = func(l xlog.Logger, m string, f xlog.F) {
 }
 
 // Parent returns the parent of the mutex
-func (m *RWMutex) Parent() (o string) {
+func (m *RWMutexLogged) Parent() (o string) {
 	s := bytes.Split(Stack(), byteLineDelimiter)
 	if len(s) > 3 {
 		for a := 3; a < len(s); a++ {
@@ -92,7 +92,7 @@ func (m *RWMutex) Parent() (o string) {
 }
 
 // Log logs mutex related information
-func (m *RWMutex) Register(action string) (o RWMutexInfo) {
+func (m *RWMutexLogged) Register(action string) (o RWMutexInfo) {
 	// Init
 	o = RWMutexInfo{
 		Action: action,
@@ -124,7 +124,7 @@ func (m *RWMutex) Register(action string) (o RWMutexInfo) {
 }
 
 // Lock write locks the mutex
-func (m *RWMutex) Lock() {
+func (m *RWMutexLogged) Lock() {
 	if m.Timeout > 0 {
 		mi := m.Register("Lock")
 		defer func() {
@@ -136,12 +136,12 @@ func (m *RWMutex) Lock() {
 }
 
 // Unlock write unlocks the mutex
-func (m *RWMutex) Unlock() {
+func (m *RWMutexLogged) Unlock() {
 	m.RWMutex.Unlock()
 }
 
 // RLock read locks the mutex
-func (m *RWMutex) RLock() {
+func (m *RWMutexLogged) RLock() {
 	if m.Timeout > 0 {
 		mi := m.Register("RLock")
 		defer func() {
@@ -153,6 +153,6 @@ func (m *RWMutex) RLock() {
 }
 
 // RUnlock read unlocks the mutex
-func (m *RWMutex) RUnlock() {
+func (m *RWMutexLogged) RUnlock() {
 	m.RWMutex.Unlock()
 }

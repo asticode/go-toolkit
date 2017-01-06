@@ -31,7 +31,7 @@ func TestRWMutex_Parent(t *testing.T) {
 	sync.Stack = func() []byte {
 		return mockStack()
 	}
-	m := sync.NewRWMutex(xlog.NopLogger, "Test", 0)
+	m := sync.NewRWMutexLogged(xlog.NopLogger, "Test", 0)
 	assert.Equal(t, "main.(*Worker).Retire(0xc4200f1800, 0x90cfa0, 0xc420018d70) | /home/asticode/projects/go/src/github.com/asticode/myproject/worker.go:174 +0x11d", m.Parent())
 }
 
@@ -43,7 +43,7 @@ func TestRWMutex_Register(t *testing.T) {
 	sync.Error = func(l xlog.Logger, m string, f xlog.F) {
 		i = append(i, m)
 	}
-	m := sync.NewRWMutex(xlog.NopLogger, "Test", time.Nanosecond)
+	m := sync.NewRWMutexLogged(xlog.NopLogger, "Test", time.Nanosecond)
 	m.Lock()
 	go func() {
 		time.Sleep(1 * time.Millisecond)
