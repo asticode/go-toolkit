@@ -64,7 +64,7 @@ func (m *RWMutex) RLock() {
 
 // RUnlock read unlocks the mutex
 func (m *RWMutex) RUnlock() {
-	m.mutex.Unlock()
+	m.mutex.RUnlock()
 	m.logger.Debugf("RUnlock executed for %s", m.name, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
