@@ -31,7 +31,6 @@ type StackItem struct {
 
 // NewStack returns a new stack
 func NewStack() (o Stack) {
-	// Loop through stack lines
 	var i = &StackItem{}
 	for _, line := range bytes.Split(DebugStack(), byteLineDelimiter) {
 		// Trim line
