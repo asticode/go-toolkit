@@ -2,6 +2,7 @@ package debug
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"runtime/debug"
 	"strconv"
@@ -48,4 +49,9 @@ func NewStack() (o Stack) {
 		}
 	}
 	return
+}
+
+// String allows StackItem to implement the Stringer interface
+func (i StackItem) String() string {
+	return fmt.Sprintf("function %s at %s:%d", i.Function, i.Filename, i.Line)
 }
