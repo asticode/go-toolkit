@@ -93,7 +93,7 @@ func (m *RWMutex) IsDeadlocked(timeout time.Duration) (o bool) {
 
 // LastSuccessfulLockCaller returns the stack item of the last successful lock caller
 func (m *RWMutex) LastSuccessfulLockCaller() (s debug.StackItem) {
-	if len(m.lastSuccessfulLockStack) >= 4 {
+	if len(m.lastSuccessfulLockStack) >= 5 {
 		s = m.lastSuccessfulLockStack[4]
 	}
 	return
