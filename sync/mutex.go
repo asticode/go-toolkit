@@ -4,7 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/asticode/go-toolkit/debug"
+	"fmt"
+	"runtime"
+
 	"github.com/rs/xlog"
 )
 
@@ -15,10 +17,10 @@ const (
 
 // RWMutex represents a RWMutex capable of logging its actions to ease deadlock debugging
 type RWMutex struct {
-	lastSuccessfulLockStack debug.Stack
-	logger                  xlog.Logger
-	mutex                   *sync.RWMutex
-	name                    string
+	lastSuccessfulLockCaller string
+	logger                   xlog.Logger
+	mutex                    *sync.RWMutex
+	name                     string
 }
 
 // NewRWMutex creates a new RWMutex
@@ -39,7 +41,9 @@ func (m *RWMutex) Lock() {
 	m.logger.Debugf("Lock acquired for %s", m.name, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
-	m.lastSuccessfulLockStack = debug.NewStack()
+	if _, file, line, ok := runtime.Caller(1); ok {
+		m.lastSuccessfulLockCaller = fmt.Sprintf("%s:%d", file, line)
+	}
 }
 
 // Unlock write unlocks the mutex
@@ -59,7 +63,9 @@ func (m *RWMutex) RLock() {
 	m.logger.Debugf("RLock acquired for %s", m.name, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
-	m.lastSuccessfulLockStack = debug.NewStack()
+	if _, file, line, ok := runtime.Caller(1); ok {
+		m.lastSuccessfulLockCaller = fmt.Sprintf("%s:%d", file, line)
+	}
 }
 
 // RUnlock read unlocks the mutex
@@ -70,14 +76,15 @@ func (m *RWMutex) RUnlock() {
 	})
 }
 
-// IsDeadlocked checks whether the mutex is deadlocked with a given timeout
-func (m *RWMutex) IsDeadlocked(timeout time.Duration) (o bool) {
+// IsDeadlocked checks whether the mutex is deadlocked with a given timeout and returns the last caller
+func (m *RWMutex) IsDeadlocked(timeout time.Duration) (o bool, c string) {
 	o = true
+	c = m.lastSuccessfulLockCaller
 	var channelLockAcquired = make(chan bool)
 	go func() {
 		m.mutex.Lock()
 		defer m.mutex.Unlock()
-		channelLockAcquired <- true
+		close(channelLockAcquired)
 	}()
 	for {
 		select {
@@ -87,14 +94,6 @@ func (m *RWMutex) IsDeadlocked(timeout time.Duration) (o bool) {
 		case <-time.After(timeout):
 			return
 		}
-	}
-	return
-}
-
-// LastSuccessfulLockCaller returns the stack item of the last successful lock caller
-func (m *RWMutex) LastSuccessfulLockCaller() (s debug.StackItem) {
-	if len(m.lastSuccessfulLockStack) >= 5 {
-		s = m.lastSuccessfulLockStack[4]
 	}
 	return
 }
