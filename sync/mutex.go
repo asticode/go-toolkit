@@ -34,16 +34,18 @@ func NewRWMutex(l xlog.Logger, name string) *RWMutex {
 
 // Lock write locks the mutex
 func (m *RWMutex) Lock() {
-	m.logger.Debugf("Requesting lock for %s", m.name, xlog.F{
+	var caller string
+	if _, file, line, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("%s:%d", file, line)
+	}
+	m.logger.Debugf("Requesting lock for %s at %s", m.name, caller, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
 	m.mutex.Lock()
-	m.logger.Debugf("Lock acquired for %s", m.name, xlog.F{
+	m.logger.Debugf("Lock acquired for %s at %s", m.name, caller, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
-	if _, file, line, ok := runtime.Caller(1); ok {
-		m.lastSuccessfulLockCaller = fmt.Sprintf("%s:%d", file, line)
-	}
+	m.lastSuccessfulLockCaller = caller
 }
 
 // Unlock write unlocks the mutex
@@ -56,16 +58,18 @@ func (m *RWMutex) Unlock() {
 
 // RLock read locks the mutex
 func (m *RWMutex) RLock() {
-	m.logger.Debugf("Requesting rlock for %s", m.name, xlog.F{
+	var caller string
+	if _, file, line, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("%s:%d", file, line)
+	}
+	m.logger.Debugf("Requesting rlock for %s at %s", m.name, caller, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
 	m.mutex.RLock()
-	m.logger.Debugf("RLock acquired for %s", m.name, xlog.F{
+	m.logger.Debugf("RLock acquired for %s at %s", m.name, caller, xlog.F{
 		loggerKeyMutexName: m.name,
 	})
-	if _, file, line, ok := runtime.Caller(1); ok {
-		m.lastSuccessfulLockCaller = fmt.Sprintf("%s:%d", file, line)
-	}
+	m.lastSuccessfulLockCaller = caller
 }
 
 // RUnlock read unlocks the mutex
