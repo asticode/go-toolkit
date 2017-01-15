@@ -1,16 +1,17 @@
 package template
 
 import (
-	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 // ParseDirectory parses a directory recursively
 func ParseDirectory(i, ext string) (t *template.Template, err error) {
 	// Parse templates
+	i = filepath.Clean(i)
 	t = template.New("Root")
 	return t, filepath.Walk(i, func(path string, info os.FileInfo, e error) (err error) {
 		// Check input error
